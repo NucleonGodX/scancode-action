@@ -1,0 +1,27 @@
+name: License Compliance Check
+
+on: [push, pull_request]
+
+jobs:
+  license-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ScanCode.io
+        uses: nexB/scancode-action@alpha
+        with:
+          pipelines: "scan_codebase"
+
+      - name: Check for Disallowed Licenses
+        run: |
+          DISALLOWED_LICENSES="GPL-3.0 AGPL-3.0"
+          LICENSE_FILE="scancode-outputs/*.json"
+
+          for LICENSE in $DISALLOWED_LICENSES; do
+            if grep -q "$LICENSE" $LICENSE_FILE; then
+              echo "❌ Build failed! Found disallowed license: $LICENSE"
+              exit 1
+            fi
+          done
+        shell: bash
