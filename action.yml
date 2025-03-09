@@ -23,6 +23,18 @@ inputs:
   python-version:
     description: "Python version"
     default: "3.11"
+  generate-sbom:
+    description: "Generate comprehensive SBOM with vulnerability data"
+    default: "true"
+  sbom-format:
+    description: "SBOM format to generate (spdx, cyclonedx, or both)"
+    default: "both"
+  policy-file:
+    description: "Path to policy configuration file for pass/fail criteria"
+    required: false
+  fail-on-findings:
+    description: "Fail the workflow if findings match certain criteria"
+    default: "false"
 
 runs:
   using: "composite"
@@ -106,7 +118,15 @@ runs:
         --project ${{ inputs.project-name }} 
         --format ${{ inputs.output-formats }} 
         --no-color
-
+    - name: Process scan results
+      shell: bash
+      run: |
+        python ${{ github.action_path }}/scripts/process_results.py \
+          --input "${{ env.PROJECT_WORK_DIRECTORY }}/output/scancodeio.json" \
+          --policy "${{ inputs.policy-file }}" \
+          --generate-sbom "${{ inputs.generate-sbom }}" \
+          --sbom-format "${{ inputs.sbom-format }}" \
+          --fail-on-findings "${{ inputs.fail-on-findings }}"
     - name: Upload outputs
       uses: actions/upload-artifact@v4
       id: artifact-upload-step
