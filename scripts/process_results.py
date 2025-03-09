@@ -43,23 +43,10 @@ def load_policy(file_path):
 def extract_resources(scan_results):
     """Extract resources (packages, dependencies, files) from scan results."""
     resources = {
-        'packages': [],
-        'dependencies': [],
-        'files': []
+        'packages': scan_results.get('packages', []),
+        'dependencies': scan_results.get('dependencies', []),
+        'files': scan_results.get('files', [])
     }
-    
-    # Check if resources exist in scan results
-    if 'resources' not in scan_results:
-        return resources
-    
-    for resource in scan_results.get('resources', []):
-        resource_type = resource.get('type')
-        if resource_type == 'package':
-            resources['packages'].append(resource)
-        elif resource_type == 'dependency':
-            resources['dependencies'].append(resource)
-        elif resource_type == 'file':
-            resources['files'].append(resource)
     
     return resources
 
