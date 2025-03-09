@@ -87,40 +87,45 @@ def check_license_policy(resources, policy):
     min_clarity_score = license_policy.get('minimum_clarity_score', 0)
     
     for resource in resources['files']:
-        if 'licenses' not in resource:
+        # Check if there are license detections in the file
+        if 'detected_license_expression' not in resource or not resource['detected_license_expression']:
             continue
         
-        for license_detection in resource.get('licenses', []):
-            license_key = license_detection.get('key')
-            license_score = license_detection.get('score', 0)
-            
-            # Check prohibited licenses
-            if license_key in prohibited_licenses:
-                violations.append({
-                    'type': 'prohibited_license',
-                    'license': license_key,
-                    'file_path': resource.get('path', ''),
-                    'message': f"Prohibited license '{license_key}' found in {resource.get('path', '')}"
-                })
-            
-            # Check allowed licenses (if list is not empty)
-            if allowed_licenses and license_key not in allowed_licenses:
-                violations.append({
-                    'type': 'disallowed_license',
-                    'license': license_key,
-                    'file_path': resource.get('path', ''),
-                    'message': f"License '{license_key}' not in allowed list found in {resource.get('path', '')}"
-                })
-            
-            # Check license clarity score
-            if license_score < min_clarity_score:
-                violations.append({
-                    'type': 'low_clarity_score',
-                    'license': license_key,
-                    'score': license_score,
-                    'file_path': resource.get('path', ''),
-                    'message': f"License '{license_key}' has clarity score {license_score}, which is below minimum {min_clarity_score}"
-                })
+        # Get the detected license
+        license_key = resource['detected_license_expression']
+        
+        # Check prohibited licenses
+        if license_key in prohibited_licenses:
+            violations.append({
+                'type': 'prohibited_license',
+                'license': license_key,
+                'file_path': resource.get('path', ''),
+                'message': f"Prohibited license '{license_key}' found in {resource.get('path', '')}"
+            })
+        
+        # Check allowed licenses (if list is not empty)
+        if allowed_licenses and license_key not in allowed_licenses:
+            violations.append({
+                'type': 'disallowed_license',
+                'license': license_key,
+                'file_path': resource.get('path', ''),
+                'message': f"License '{license_key}' not in allowed list found in {resource.get('path', '')}"
+            })
+        
+        # Check license clarity score from license detections if available
+        if 'license_detections' in resource and resource['license_detections']:
+            for detection in resource['license_detections']:
+                if 'matches' in detection and detection['matches']:
+                    for match in detection['matches']:
+                        score = match.get('score', 0)
+                        if score < min_clarity_score:
+                            violations.append({
+                                'type': 'low_clarity_score',
+                                'license': license_key,
+                                'score': score,
+                                'file_path': resource.get('path', ''),
+                                'message': f"License '{license_key}' has clarity score {score}, which is below minimum {min_clarity_score}"
+                            })
     
     return len(violations) == 0, violations
 
@@ -328,8 +333,20 @@ def main():
     """Main function."""
     args = parse_arguments()
     
+    # Find the actual results file
+    input_dir = os.path.dirname(args.input)
+    results_files = [f for f in os.listdir(input_dir) if f.startswith("results-") and f.endswith(".json")]
+    
+    if not results_files:
+        print(f"Error: No results file found in {input_dir}")
+        sys.exit(1)
+    
+    # Use the most recent results file (should be only one in most cases)
+    results_file = os.path.join(input_dir, sorted(results_files)[-1])
+    print(f"Using results file: {results_file}")
+    
     # Load scan results
-    scan_results = load_scan_results(args.input)
+    scan_results = load_scan_results(results_file)
     
     # Load policy configuration if provided
     policy = load_policy(args.policy) if args.policy else None
@@ -344,14 +361,14 @@ def main():
     
     # Enhance SBOMs if requested
     if args.generate_sbom.lower() == "true":
-        output_dir = os.path.dirname(args.input)
+        output_dir = os.path.dirname(results_file)
         enhance_sbom(scan_results, output_dir, args.sbom_format)
     
     # Generate summary
     summary = generate_summary(resources, vulnerabilities, license_violations, vuln_violations)
     
     # Write summary to output file
-    summary_path = os.path.join(os.path.dirname(args.input), "scan-summary.json")
+    summary_path = os.path.join(os.path.dirname(results_file), "scan-summary.json")
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2)
     
