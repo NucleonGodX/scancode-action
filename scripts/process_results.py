@@ -74,6 +74,8 @@ def check_license_policy(resources, policy):
     min_clarity_score = license_policy.get('minimum_clarity_score', 0)
     
     for resource in resources['files']:
+        if resource.get('path', '').endswith('policy.yml'):
+            continue
         # Check if there are license detections in the file
         if 'detected_license_expression' not in resource or not resource['detected_license_expression']:
             continue
