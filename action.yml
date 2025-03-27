@@ -125,8 +125,6 @@ runs:
         python ${{ github.action_path }}/scripts/process_results.py \
           --input "${{ env.PROJECT_WORK_DIRECTORY }}/output/scancodeio.json" \
           --policy "${{ inputs.policy-file }}" \
-          --generate-sbom "${{ inputs.generate-sbom }}" \
-          --sbom-format "${{ inputs.sbom-format }}" \
           --fail-on-findings "${{ inputs.fail-on-findings }}"
           
     - name: Upload outputs
