@@ -122,8 +122,9 @@ runs:
     - name: Check compliance
       if: inputs.check-compliance == 'true'
       shell: bash
-      run: scanpipe check-compliance
+      run: scanpipe check-compliance 
         --project ${{ inputs.project-name }}
+        --verbosity 2
         --fail-level ${{ inputs.compliance-fail-level }}
 
     - name: Upload outputs
