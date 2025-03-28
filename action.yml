@@ -14,6 +14,10 @@ inputs:
     description: "Provide one or more URLs to download for the pipeline run execution."
     required: false
     default: ""
+  input-file:
+    description: "Path to the input policy file."
+    required: false
+    default: "${{ github.workspace }}/scancode-inputs/policies.yml"
   project-name:
     description: "Name of the project."
     default: "scancode-action"
@@ -80,10 +84,11 @@ runs:
         done
         echo "INPUT_URL_CLI_ARGS=${INPUT_URL_CLI_ARGS}" >> $GITHUB_ENV
 
-    - name: Create project
+    - name: Create project with policies
       shell: bash
       run: |
         scanpipe create-project ${{ inputs.project-name }} \
+        --input-file ${{ inputs.input-file }} \
         ${{ env.PIPELINE_CLI_ARGS }} \
         ${{ env.INPUT_URL_CLI_ARGS }}
 
