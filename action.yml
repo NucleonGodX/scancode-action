@@ -115,7 +115,8 @@ runs:
     - name: Generate outputs
       id: scanpipe
       shell: bash
-      run: scanpipe output
+      run: scanpipe output 
+        --print 
         --project ${{ inputs.project-name }} 
         --format ${{ inputs.output-formats }}
 
