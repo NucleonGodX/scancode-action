@@ -118,7 +118,6 @@ runs:
       run: scanpipe output 
         --print 
         --project ${{ inputs.project-name }} 
-        --format ${{ inputs.output-formats }}
 
     - name: Check compliance
       if: inputs.check-compliance == 'true'
