@@ -1,0 +1,36 @@
+name: ScanCode Analysis with SBOM Generation
+on: [push]
+
+jobs:
+  scan-codebase:
+    runs-on: ubuntu-22.04
+    name: Scan codebase and generate SBOM
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: scancode-inputs
+      
+      # Copy sample policy file
+      - name: Create policy file
+        run: |
+          cat > policy.yml << 'EOL'
+          license:
+            allowed:
+              - apache-2.0
+              - mit
+            prohibited:
+              - gpl-3.0
+          vulnerabilities:
+            maximum_severity: high
+          EOL
+      
+      - uses: NucleonGodX/scancode-action@main
+        with:
+          pipelines: "scan_codebase,find_vulnerabilities"
+          output-formats: "json"
+          generate-sbom: "true"
+          sbom-format: "both"
+          policy-file: "policy.yml"
+          fail-on-findings: "false"  # Set to true to fail workflow on policy violations
+        env:
+          VULNERABLECODE_URL: https://public.vulnerablecode.io/
