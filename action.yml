@@ -62,7 +62,7 @@ runs:
     - name: Install ScanCode.io
       shell: bash
       run: |
-        pip install --upgrade scancode.io
+        pip install --upgrade scancodeio
         scanpipe migrate --verbosity 0
 
     - name: Generate `--pipeline` CLI arguments
