@@ -11,8 +11,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Process ScanCode.io scan results")
     parser.add_argument("--input", required=True, help="Path to the ScanCode.io JSON output file")
     parser.add_argument("--policy", help="Path to policy configuration file")
-    parser.add_argument("--generate-sbom", default="true", help="Generate enhanced SBOMs with vulnerability data")
-    parser.add_argument("--sbom-format", default="both", help="SBOM format (spdx, cyclonedx, or both)")
     parser.add_argument("--fail-on-findings", default="false", help="Fail if findings match policy criteria")
     return parser.parse_args()
 

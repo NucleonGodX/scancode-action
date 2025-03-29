@@ -62,7 +62,7 @@ runs:
     - name: Install ScanCode.io
       shell: bash
       run: |
-        pip install --upgrade scancodeio
+        pip install --upgrade pip install --upgrade git+https://github.com/NucleonGodX/scancode.io.git
         scanpipe migrate --verbosity 0
 
     - name: Generate `--pipeline` CLI arguments
@@ -116,8 +116,8 @@ runs:
       id: scanpipe
       shell: bash
       run: scanpipe output 
-        --print 
         --project ${{ inputs.project-name }} 
+        --format ${{ inputs.output-formats }}
 
     - name: Check compliance
       if: inputs.check-compliance == 'true'
