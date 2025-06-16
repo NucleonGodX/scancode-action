@@ -28,6 +28,10 @@ inputs:
     description: "Failure level for compliance check. Options: ERROR, WARNING, MISSING."
     default: "ERROR"
     required: false
+  policies-path:
+    description: "Path to the policies.yml file for license compliance checking"
+    default: "${{ github.workspace }}/policies.yml"
+    required: false
   python-version:
     description: "Python version."
     default: "3.12"
@@ -116,6 +120,19 @@ runs:
           cp -r "$SOURCE_PATH"/* "$DESTINATION_PATH"
         fi
 
+    - name: Copy policies file to project work directory
+      shell: bash
+      run: |
+        POLICIES_FILE="${{ inputs.policies-path }}"
+        if [ -f "$POLICIES_FILE" ]; then
+          echo "Found policies file at: $POLICIES_FILE"
+          cp "$POLICIES_FILE" "${{ env.PROJECT_WORK_DIRECTORY }}/policies.yml"
+          echo "Copied policies file to project work directory"
+        else
+          echo "No policies file found at: $POLICIES_FILE"
+          echo "Compliance checking will use default behavior"
+        fi
+
     - name: Run the pipelines
       shell: bash
       run: scanpipe execute --project ${{ inputs.project-name }} --no-color
@@ -130,9 +147,20 @@ runs:
     - name: Check compliance
       if: inputs.check-compliance == 'true'
       shell: bash
-      run: scanpipe check-compliance
-        --project ${{ inputs.project-name }}
-        --fail-level ${{ inputs.compliance-fail-level }}
+      run: |
+        POLICIES_FILE="${{ env.PROJECT_WORK_DIRECTORY }}/policies.yml"
+        if [ -f "$POLICIES_FILE" ]; then
+          echo "Running compliance check with policies file"
+          scanpipe check-compliance \
+            --project ${{ inputs.project-name }} \
+            --fail-level ${{ inputs.compliance-fail-level }} \
+            --policies "$POLICIES_FILE"
+        else
+          echo "Running compliance check without policies file"
+          scanpipe check-compliance \
+            --project ${{ inputs.project-name }} \
+            --fail-level ${{ inputs.compliance-fail-level }}
+        fi
 
     - name: Upload outputs
       uses: actions/upload-artifact@v4
